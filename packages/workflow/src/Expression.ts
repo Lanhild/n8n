@@ -1,4 +1,4 @@
-import * as tmpl from '@n8n_io/riot-tmpl';
+import * as tmpl from 'ricardo-testing';
 import { DateTime, Duration, Interval } from 'luxon';
 
 import type {

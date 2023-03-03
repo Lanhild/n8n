@@ -1,4 +1,4 @@
-declare module '@n8n_io/riot-tmpl' {
+declare module 'ricardo-testing' {
 	interface Brackets {
 		set(token: string): void;
 	}
