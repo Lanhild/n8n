@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import type { RequestHandler } from 'express';
 import {
 	RESPONSE_ERROR_MESSAGES,
 	STARTER_TEMPLATE_NAME,
