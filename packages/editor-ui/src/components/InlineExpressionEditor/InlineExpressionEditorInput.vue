@@ -7,7 +7,7 @@ import mixins from 'vue-typed-mixins';
 import { mapStores } from 'pinia';
 import { EditorView, keymap } from '@codemirror/view';
 import { EditorState, Prec } from '@codemirror/state';
-import { history } from '@codemirror/commands';
+import { history, redo } from '@codemirror/commands';
 import { autocompletion, completionStatus } from '@codemirror/autocomplete';
 
 import { useNDVStore } from '@/stores/ndv';
@@ -87,6 +87,7 @@ export default mixins(completionManager, expressionManager, workflowHelpers).ext
 							return false;
 						},
 					},
+					{ key: 'Mod-Shift-z', run: redo },
 				]),
 			),
 			autocompletion(),
@@ -95,6 +96,7 @@ export default mixins(completionManager, expressionManager, workflowHelpers).ext
 			expressionInputHandler(),
 			EditorView.lineWrapping,
 			EditorView.editable.of(!this.isReadOnly),
+			EditorView.contentAttributes.of({ 'data-gramm': 'false' }), // disable grammarly
 			EditorView.domEventHandlers({
 				focus: () => {
 					this.$emit('focus');

@@ -6,7 +6,7 @@
 import mixins from 'vue-typed-mixins';
 import { EditorView, keymap } from '@codemirror/view';
 import { EditorState, Prec } from '@codemirror/state';
-import { history } from '@codemirror/commands';
+import { history, redo } from '@codemirror/commands';
 
 import { workflowHelpers } from '@/mixins/workflowHelpers';
 import { expressionManager } from '@/mixins/expressionManager';
@@ -54,6 +54,7 @@ export default mixins(expressionManager, completionManager, workflowHelpers).ext
 							return false;
 						},
 					},
+					{ key: 'Mod-Shift-z', run: redo },
 				]),
 			),
 			n8nLang(),
@@ -61,6 +62,7 @@ export default mixins(expressionManager, completionManager, workflowHelpers).ext
 			expressionInputHandler(),
 			EditorView.lineWrapping,
 			EditorState.readOnly.of(this.isReadOnly),
+			EditorView.contentAttributes.of({ 'data-gramm': 'false' }), // disable grammarly
 			EditorView.domEventHandlers({ scroll: forceParse }),
 			EditorView.updateListener.of((viewUpdate) => {
 				if (!this.editor || !viewUpdate.docChanged) return;
