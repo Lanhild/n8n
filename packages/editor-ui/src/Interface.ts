@@ -1,7 +1,7 @@
-import { CREDENTIAL_EDIT_MODAL_KEY } from './constants';
+import type { CREDENTIAL_EDIT_MODAL_KEY } from './constants';
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { IMenuItem } from 'n8n-design-system';
-import {
+import type { IMenuItem } from 'n8n-design-system';
+import type {
 	GenericValue,
 	IConnections,
 	ICredentialsDecrypted,
@@ -25,10 +25,8 @@ import {
 	INodeCredentials,
 	INodeListSearchItems,
 	NodeParameterValueType,
-	INodeActionTypeDescription,
 	IDisplayOptions,
 	IExecutionsSummary,
-	IAbstractEventMessage,
 	FeatureFlags,
 	ExecutionStatus,
 	ITelemetryTrackProperties,
@@ -36,10 +34,14 @@ import {
 	IUserManagementSettings,
 	WorkflowSettings,
 } from 'n8n-workflow';
-import { SignInType } from './constants';
-import { FAKE_DOOR_FEATURES, TRIGGER_NODE_FILTER, REGULAR_NODE_FILTER } from './constants';
-import { BulkCommand, Undoable } from '@/models/history';
-import { PartialBy } from '@/utils/typeHelpers';
+import type { SignInType } from './constants';
+import type {
+	FAKE_DOOR_FEATURES,
+	TRIGGER_NODE_CREATOR_VIEW,
+	REGULAR_NODE_CREATOR_VIEW,
+} from './constants';
+import type { BulkCommand, Undoable } from '@/models/history';
+import type { PartialBy } from '@/utils/typeHelpers';
 
 export * from 'n8n-design-system/types';
 
@@ -137,43 +139,6 @@ export interface INodeTypesMaxCount {
 
 export interface IExternalHooks {
 	run(eventName: string, metadata?: IDataObject): Promise<void>;
-}
-
-/**
- * @deprecated Do not add methods to this interface.
- */
-export interface IRestApi {
-	getActiveWorkflows(): Promise<string[]>;
-	getActivationError(id: string): Promise<IActivationError | undefined>;
-	getCurrentExecutions(filter: ExecutionsQueryFilter): Promise<IExecutionsCurrentSummaryExtended[]>;
-	getPastExecutions(
-		filter: ExecutionsQueryFilter,
-		limit: number,
-		lastId?: string,
-		firstId?: string,
-	): Promise<IExecutionsListResponse>;
-	stopCurrentExecution(executionId: string): Promise<IExecutionsStopData>;
-	makeRestApiRequest(method: string, endpoint: string, data?: any): Promise<any>;
-	getCredentialTranslation(credentialType: string): Promise<object>;
-	removeTestWebhook(workflowId: string): Promise<boolean>;
-	runWorkflow(runData: IStartRunData): Promise<IExecutionPushResponse>;
-	createNewWorkflow(sendData: IWorkflowDataUpdate): Promise<IWorkflowDb>;
-	updateWorkflow(id: string, data: IWorkflowDataUpdate, forceSave?: boolean): Promise<IWorkflowDb>;
-	deleteWorkflow(name: string): Promise<void>;
-	getWorkflow(id: string): Promise<IWorkflowDb>;
-	getWorkflows(filter?: object): Promise<IWorkflowShortResponse[]>;
-	getWorkflowFromUrl(url: string): Promise<IWorkflowDb>;
-	getExecution(id: string): Promise<IExecutionResponse | undefined>;
-	deleteExecutions(sendData: IExecutionDeleteFilter): Promise<void>;
-	retryExecution(id: string, loadWorkflow?: boolean): Promise<boolean>;
-	getTimezones(): Promise<IDataObject>;
-	getBinaryUrl(
-		dataPath: string,
-		mode: 'view' | 'download',
-		fileName?: string,
-		mimeType?: string,
-	): string;
-	getExecutionEvents(id: string): Promise<IAbstractEventMessage[]>;
 }
 
 export interface INodeTranslationHeaders {
@@ -745,67 +710,85 @@ export interface ITimeoutHMS {
 
 export type WorkflowTitleStatus = 'EXECUTING' | 'IDLE' | 'ERROR';
 
-export interface ISubcategoryItemProps {
-	subcategory: string;
-	description: string;
-	key?: string;
-	iconType: string;
+export type ExtractActionKeys<T> = T extends SimplifiedNodeType ? T['name'] : never;
+
+export type ActionsRecord<T extends SimplifiedNodeType[]> = {
+	[K in ExtractActionKeys<T[number]>]: ActionTypeDescription[];
+};
+
+export interface SimplifiedNodeType
+	extends Pick<
+		INodeTypeDescription,
+		'displayName' | 'description' | 'name' | 'group' | 'icon' | 'iconUrl' | 'codex' | 'defaults'
+	> {}
+export interface SubcategoryItemProps {
+	description?: string;
+	iconType?: string;
 	icon?: string;
+	title?: string;
+	subcategory?: string;
 	defaults?: INodeParameters;
+	forceIncludeNodes?: string[];
 }
 export interface ViewItemProps {
-	withTopBorder: boolean;
 	title: string;
 	description: string;
 	icon: string;
 }
-
-export interface INodeItemProps {
-	subcategory: string;
-	nodeType: INodeTypeDescription;
+export interface LabelItemProps {
+	key: string;
+}
+export interface ActionTypeDescription extends SimplifiedNodeType {
+	displayOptions?: IDisplayOptions;
+	values?: IDataObject;
+	actionKey: string;
+	codex: {
+		label: string;
+		categories: string[];
+	};
 }
 
-export interface IActionItemProps {
-	subcategory: string;
-	nodeType: INodeActionTypeDescription;
-}
-
-export interface ICategoryItemProps {
-	expanded: boolean;
-	category: string;
+export interface CategoryItemProps {
 	name: string;
+	count: number;
 }
 
 export interface CreateElementBase {
+	uuid?: string;
 	key: string;
-	includedByTrigger?: boolean;
-	includedByRegular?: boolean;
 }
 
 export interface NodeCreateElement extends CreateElementBase {
 	type: 'node';
-	category?: string[];
-	properties: INodeItemProps;
+	subcategory: string;
+	properties: SimplifiedNodeType;
 }
 
 export interface CategoryCreateElement extends CreateElementBase {
 	type: 'category';
-	properties: ICategoryItemProps;
+	subcategory: string;
+	properties: CategoryItemProps;
 }
 
 export interface SubcategoryCreateElement extends CreateElementBase {
 	type: 'subcategory';
-	properties: ISubcategoryItemProps;
+	properties: SubcategoryItemProps;
 }
 export interface ViewCreateElement extends CreateElementBase {
 	type: 'view';
 	properties: ViewItemProps;
 }
 
+export interface LabelCreateElement extends CreateElementBase {
+	type: 'label';
+	subcategory: string;
+	properties: LabelItemProps;
+}
+
 export interface ActionCreateElement extends CreateElementBase {
 	type: 'action';
-	category: string;
-	properties: IActionItemProps;
+	subcategory: string;
+	properties: ActionTypeDescription;
 }
 
 export type INodeCreateElement =
@@ -813,18 +796,12 @@ export type INodeCreateElement =
 	| CategoryCreateElement
 	| SubcategoryCreateElement
 	| ViewCreateElement
+	| LabelCreateElement
 	| ActionCreateElement;
 
-export interface ICategoriesWithNodes {
-	[category: string]: {
-		[subcategory: string]: {
-			regularCount: number;
-			triggerCount: number;
-			nodes: INodeCreateElement[];
-		};
-	};
+export interface SubcategorizedNodeTypes {
+	[subcategory: string]: INodeCreateElement[];
 }
-
 export interface ITag {
 	id: string;
 	name: string;
@@ -1110,7 +1087,7 @@ export type IFakeDoorLocation =
 	| 'credentialsModal'
 	| 'workflowShareModal';
 
-export type INodeFilterType = typeof REGULAR_NODE_FILTER | typeof TRIGGER_NODE_FILTER;
+export type NodeFilterType = typeof REGULAR_NODE_CREATOR_VIEW | typeof TRIGGER_NODE_CREATOR_VIEW;
 
 export type NodeCreatorOpenSource =
 	| ''
@@ -1125,8 +1102,8 @@ export type NodeCreatorOpenSource =
 export interface INodeCreatorState {
 	itemsFilter: string;
 	showScrim: boolean;
-	rootViewHistory: INodeFilterType[];
-	selectedView: INodeFilterType;
+	rootViewHistory: NodeFilterType[];
+	selectedView: NodeFilterType;
 	openSource: NodeCreatorOpenSource;
 }
 
@@ -1454,4 +1431,15 @@ export type SamlPreferences = {
 export type SamlPreferencesExtractedData = {
 	entityID: string;
 	returnUrl: string;
+};
+
+export type VersionControlPreferences = {
+	connected: boolean;
+	repositoryUrl: string;
+	authorName: string;
+	authorEmail: string;
+	branchName: string;
+	branchReadOnly: boolean;
+	branchColor: string;
+	publicKey?: string;
 };
