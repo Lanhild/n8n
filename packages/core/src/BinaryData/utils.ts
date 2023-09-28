@@ -1,4 +1,7 @@
+import fs from 'node:fs/promises';
+import type { Readable } from 'node:stream';
 import type { BinaryData } from './types';
+import concatStream from 'concat-stream';
 
 /**
  * Modes for storing binary data:
@@ -12,14 +15,17 @@ export function areValidModes(modes: string[]): modes is BinaryData.Mode[] {
 	return modes.every((m) => BINARY_DATA_MODES.includes(m as BinaryData.Mode));
 }
 
-export class InvalidBinaryDataModeError extends Error {
-	constructor() {
-		super(`Invalid binary data mode. Valid modes: ${BINARY_DATA_MODES.join(', ')}`);
+export async function ensureDirExists(dir: string) {
+	try {
+		await fs.access(dir);
+	} catch {
+		await fs.mkdir(dir, { recursive: true });
 	}
 }
 
-export class InvalidBinaryDataManagerError extends Error {
-	constructor(mode: string) {
-		super('No binary data manager found for mode: ' + mode);
-	}
+export async function toBuffer(body: Buffer | Readable) {
+	return new Promise<Buffer>((resolve) => {
+		if (Buffer.isBuffer(body)) resolve(body);
+		else body.pipe(concatStream(resolve));
+	});
 }
